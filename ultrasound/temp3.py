@@ -10,29 +10,30 @@ class TaskThread:
         self._timeout = timeout  # Timeout for the thread
         self._callback = None  # Callback function to be called when task completes
         self._thread = threading.Thread(target=self._taskA)
+        self.last_result_time = time.time()  # To track when the last result was received
 
     def _get_average_distance(self, samples=5):
-        time.sleep(0.4)
+        time.sleep(0.4)  # Simulate some delay between measurements
         return random.uniform(1.0, 400.0)  # Simulated distance in cm
 
     def _taskA(self):
-        
         while not self._event.is_set():
             # Simulate task processing
             result = self._get_average_distance(samples=3)
-            start_time = time.time()
 
+            # Update the last result time
             with self._lock:
                 self.result = result
+                self.last_result_time = time.time()  # Update last result time
                 if self._callback:
                     self._callback(result)  # Call the callback with the result
 
             time.sleep(0.3)  # Delay between measurements
 
-            # Check if timeout occurred
-            if time.time() - start_time >= self._timeout:
+            # Check if timeout occurred (if no result received for the last `self._timeout` seconds)
+            if time.time() - self.last_result_time >= self._timeout:
                 with self._lock:  # Thread-safe result modification
-                    self.result = "Timeout reached after calculating distances"
+                    self.result = "Timeout reached after no results"
                 print("Timeout occurred!")
                 self._event.set()  # Stop the thread on timeout
                 if self._callback:
