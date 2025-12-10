@@ -16,10 +16,12 @@ class TaskThread:
         return random.uniform(1.0, 400.0)  # Simulated distance in cm
 
     def _taskA(self):
-        start_time = time.time()
+        
         while not self._event.is_set():
             # Simulate task processing
             result = self._get_average_distance(samples=3)
+            start_time = time.time()
+
             with self._lock:
                 self.result = result
                 if self._callback:

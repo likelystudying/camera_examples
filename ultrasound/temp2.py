@@ -72,8 +72,22 @@ class MyThreadedClass:
         with self._lock:
             return self.result
 
-# Usage example:
-if __name__ == "__main__":
+"""Demo: start a cancellable threaded operation and stop it early."""
+
+def stop_example():
+    my_instance = MyThreadedClass()
+
+    print("--- Demo: Start stoppable operation ---")
+    t = my_instance.start_threaded_operation("Demo stoppable", my_instance.on_thread_completion)
+
+    # Let the job run briefly then request stop
+    time.sleep(0.5)
+    print("Requesting stop from main...")
+    my_instance.stop_threaded_operation(wait=True, timeout=1.0)
+
+    print("After stop, result:", my_instance.get_result())
+
+def callback_example1():
     my_instance = MyThreadedClass()
 
     # Option 1: Using a method of the same class as a callback
@@ -82,6 +96,10 @@ if __name__ == "__main__":
     # If the result is important, wait for the thread to finish instead of sleeping
     t.join()
     print("Result after join:", my_instance.get_result())
+
+
+def callback_example2():
+    my_instance = MyThreadedClass()
 
     # Option 2: Using a separate function as a callback
     def external_callback(result):
@@ -94,3 +112,26 @@ if __name__ == "__main__":
     # Or poll safely:
     time.sleep(0.1)
     print("Polled result (may be None if not finished):", my_instance.get_result())
+
+def polling_example():
+    my_instance = MyThreadedClass()
+
+    print("--- Starting Threaded Operation with Polling ---")
+    t3 = my_instance.start_threaded_operation("Polling task")
+
+    # Poll for result every 0.2 seconds
+    while t3.is_alive():
+        print("Thread is still running...")
+        time.sleep(0.2)
+
+    print("Thread completed. Final result:", my_instance.get_result())
+
+
+if __name__ == '__main__':
+    
+    stop_example()
+    callback_example1()
+    callback_example2()
+    polling_example()
+
+
